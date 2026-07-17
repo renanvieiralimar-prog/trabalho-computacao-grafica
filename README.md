@@ -2,7 +2,7 @@
 
 Trabalho desenvolvido individualmente para a disciplina de Computação Gráfica.
 
-**Aluno:** Seu Nome - Sua Matrícula
+**Aluno:** Renan Vieira Lima - Matrícula: 202211140022
 
 ## Como Executar o Projeto
 1. Baixe os arquivos deste repositório ou clone o projeto.
