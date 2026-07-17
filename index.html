@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CG — Trabalho Prático</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #131a23;
+      --panel-border: #1f2b38;
+      --grid-line: #1c3a33;
+      --grid-axis: #2f6f5e;
+      --accent: #4fd1a5;
+      --accent-dim: #2e5c4d;
+      --text: #d7e2e8;
+      --text-dim: #7c8b96;
+      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "header header"
+        "canvas panel"
+        "footer footer";
+      height: 100vh;
+    }
+
+    header {
+      grid-area: header;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      background: var(--panel);
+    }
+
+    header h1 {
+      font-family: var(--mono);
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 0;
+      color: var(--accent);
+    }
+
+    header .sub {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    nav.tabs {
+      grid-area: canvas / canvas / canvas / canvas;
+    }
+
+    .canvas-wrap {
+      grid-area: canvas;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 10px 16px 0 16px;
+      flex-wrap: wrap;
+      background: var(--bg);
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .tab-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .03em;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid transparent;
+      border-bottom: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      background: var(--panel);
+      border-color: var(--panel-border);
+    }
+
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: auto;
+    }
+
+    #gridCanvas {
+      background: #081019;
+      border: 1px solid var(--panel-border);
+      image-rendering: pixelated;
+      cursor: crosshair;
+    }
+
+    .coord-readout {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(19, 26, 35, 0.85);
+      padding: 4px 8px;
+      border-radius: 3px;
+      border: 1px solid var(--panel-border);
+      pointer-events: none;
+    }
+
+    aside.panel {
+      grid-area: panel;
+      background: var(--panel);
+      border-left: 1px solid var(--panel-border);
+      padding: 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel h2 {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin: 0 0 4px 0;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      background: #0d1520;
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 7px 8px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+      width: 100%;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent-dim);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .slider-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #06120c;
+      border: none;
+      padding: 9px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.08);
+    }
+
+    button.ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--panel-border);
+      padding: 8px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button.ghost:hover {
+      color: var(--text);
+      border-color: var(--accent-dim);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-row>* {
+      flex: 1;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .placeholder-msg {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      padding: 10px;
+      border: 1px dashed var(--panel-border);
+      border-radius: 6px;
+    }
+
+    .placeholder-msg code {
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    footer {
+      grid-area: footer;
+      padding: 8px 20px;
+      border-top: 1px solid var(--panel-border);
+      background: var(--panel);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    footer input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px dotted var(--panel-border);
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 11px;
+      width: 260px;
+    }
+
+    footer input:focus {
+      outline: none;
+      border-bottom-color: var(--accent-dim);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <header>
+      <h1>CG · Trabalho Prático</h1>
+      <span class="sub">Síntese de Imagem &amp; Processamento de Imagem — grade [-11, 11]</span>
+    </header>
+
+    <div class="canvas-wrap">
+      <nav class="tabs" id="tabs">
+        <!-- Abas geradas via JS a partir de ALGORITHMS -->
+      </nav>
+      <div class="stage">
+        <canvas id="gridCanvas"></canvas>
+        <div class="coord-readout" id="coordReadout">x: 0, y: 0</div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div>
+        <h2 id="panelTitle">Configurações</h2>
+        <div id="panelBody">
+          <!-- Gerado dinamicamente -->
+        </div>
+      </div>
+
+      <div>
+        <h2>Grade</h2>
+        <div class="field">
+          <label>Limite das coordenadas (N)</label>
+          <input type="number" id="gridLimit" value="11" min="5" max="50">
+        </div>
+        <div class="btn-row">
+          <button class="ghost" id="clearBtn">Limpar grade</button>
+          <button class="ghost" id="toggleGridBtn">Ocultar linhas</button>
+        </div>
+      </div>
+
+      <div>
+        <h2>Identificação</h2>
+        <p class="hint">Preencha para aparecer no rodapé (exigido nas instruções da avaliação).</p>
+      </div>
+    </aside>
+
+    <footer>
+      <span>Aluno: <strong>Renan Vieira Lima — Matrícula: 202211140022</strong></span>
+    </footer>
+
+  </div>
+
+  <script>
+    /* =========================================================
+       CONFIGURAÇÃO DA GRADE / SISTEMA DE COORDENADAS
+       ========================================================= */
+
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // N define o intervalo visível: -N a N em X e Y
+    let N = parseInt(document.getElementById('gridLimit').value, 10);
+
+    // Tamanho em pixels de tela por unidade de grade
+    const CELL_SIZE = 28;
+    let showGridLines = true;
+
+    // Estado para guardar dados do módulo de Processamento de Imagem
+    let loadedImage = null; // Elemento <img>
+    let activeFilter = 'original'; // 'original', 'grayscale', 'binary', 'sobel'
+    let binarizationThreshold = 128; // Limiar de binarização (0-255)
+
+    function resizeCanvas() {
+      const size = (N * 2 + 1) * CELL_SIZE;
+      canvas.width = size;
+      canvas.height = size;
+      redraw();
+    }
+
+    // Converte coordenada do MUNDO (-N..N, Y para cima) em pixel de TELA (0..width, Y para baixo)
+    function worldToScreen(x, y) {
+      const px = (x + N) * CELL_SIZE;
+      const py = (N - y) * CELL_SIZE;
+      return [px, py];
+    }
+
+    // Converte pixel de TELA em coordenada do MUNDO
+    function screenToWorld(px, py) {
+      const x = Math.round(px / CELL_SIZE - N);
+      const y = Math.round(N - py / CELL_SIZE);
+      return [x, y];
+    }
+
+    // Função central de rasterização
+    function setPixel(x, y, color = '#4fd1a5') {
+      if (x < -N || x > N || y < -N || y > N) return;
+      const [px, py] = worldToScreen(x, y);
+      ctx.fillStyle = color;
+      ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+    }
+
+    // Reta via Bresenham
+    function drawLine(x0, y0, x1, y1, color) {
+      x0 = Math.round(x0); y0 = Math.round(y0);
+      x1 = Math.round(x1); y1 = Math.round(y1);
+
+      const dx = Math.abs(x1 - x0);
+      const dy = Math.abs(y1 - y0);
+      const sx = x0 < x1 ? 1 : -1;
+      const sy = y0 < y1 ? 1 : -1;
+      let err = dx - dy;
+
+      let x = x0, y = y0;
+      while (true) {
+        setPixel(x, y, color);
+        if (x === x1 && y === y1) break;
+        const e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; x += sx; }
+        if (e2 < dx) { err += dx; y += sy; }
+      }
+    }
+
+    function drawGridLines() {
+      if (!showGridLines) return;
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid-line').trim();
+      ctx.lineWidth = 1;
+      for (let i = -N; i <= N; i++) {
+        const [gx] = worldToScreen(i, 0);
+        ctx.beginPath();
+        ctx.moveTo(gx + 0.5, 0);
+        ctx.lineTo(gx + 0.5, canvas.height);
+        ctx.stroke();
+
+        const [, gy] = worldToScreen(0, i);
+        ctx.beginPath();
+        ctx.moveTo(0, gy + 0.5);
+        ctx.lineTo(canvas.width, gy + 0.5);
+        ctx.stroke();
+      }
+    }
+
+    function drawAxes() {
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid-axis').trim();
+      ctx.lineWidth = 1.5;
+      const [ox] = worldToScreen(0, 0);
+      const [, oy] = worldToScreen(0, 0);
+      ctx.beginPath();
+      ctx.moveTo(ox + CELL_SIZE / 2 + 0.5, 0);
+      ctx.lineTo(ox + CELL_SIZE / 2 + 0.5, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, oy + CELL_SIZE / 2 + 0.5);
+      ctx.lineTo(canvas.width, oy + CELL_SIZE / 2 + 0.5);
+      ctx.stroke();
+    }
+
+    function clearCanvas() {
+      ctx.fillStyle = '#081019';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function redraw() {
+      clearCanvas();
+      drawGridLines();
+      drawAxes();
+      if (activeAlgorithm && ALGORITHMS[activeAlgorithm].run) {
+        ALGORITHMS[activeAlgorithm].run(getCurrentParams());
+      }
+    }
+
+    /* =========================================================
+       INTERAÇÃO: LEITURA DE COORDENADAS / CLIQUE NA GRADE
+       ========================================================= */
+
+    const coordReadout = document.getElementById('coordReadout');
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const [x, y] = screenToWorld(px, py);
+      coordReadout.textContent = `x: ${x}, y: ${y}`;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const [x, y] = screenToWorld(px, py);
+      if (activeAlgorithm && ALGORITHMS[activeAlgorithm].onCanvasClick) {
+        ALGORITHMS[activeAlgorithm].onCanvasClick(x, y);
+      }
+    });
+
+    /* =========================================================
+       REGISTRO DE ALGORITMOS (ABAS)
+       ========================================================= */
+
+    let bresenhamClickCount = 0;
+
+    const ALGORITHMS = {
+      bresenham: {
+        label: 'Bresenham',
+        params: [
+          { id: 'x0', label: 'X inicial', type: 'number', value: -5 },
+          { id: 'y0', label: 'Y inicial', type: 'number', value: -3 },
+          { id: 'x1', label: 'X final', type: 'number', value: 6 },
+          { id: 'y1', label: 'Y final', type: 'number', value: 4 },
+        ],
+        run(params) {
+          drawLine(params.x0, params.y0, params.x1, params.y1);
+        },
+        onCanvasClick(x, y) {
+          if (bresenhamClickCount === 0) {
+            document.getElementById('param_bresenham_x0').value = x;
+            document.getElementById('param_bresenham_y0').value = y;
+            bresenhamClickCount = 1;
+          } else {
+            document.getElementById('param_bresenham_x1').value = x;
+            document.getElementById('param_bresenham_y1').value = y;
+            bresenhamClickCount = 0;
+          }
+          redraw();
+        }
+      },
+
+      circulo: {
+        label: 'Círculo',
+        params: [
+          { id: 'cx', label: 'Centro X', type: 'number', value: 0 },
+          { id: 'cy', label: 'Centro Y', type: 'number', value: 0 },
+          { id: 'r', label: 'Raio', type: 'number', value: 6 },
+        ],
+        run(params) {
+          const cx = Math.round(params.cx);
+          const cy = Math.round(params.cy);
+          const r = Math.round(params.r);
+
+          function plotCirclePoints(x, y) {
+            setPixel(cx + x, cy + y);
+            setPixel(cx - x, cy + y);
+            setPixel(cx + x, cy - y);
+            setPixel(cx - x, cy - y);
+            setPixel(cx + y, cy + x);
+            setPixel(cx - y, cy + x);
+            setPixel(cx + y, cy - x);
+            setPixel(cx - y, cy - x);
+          }
+
+          let x = 0;
+          let y = r;
+          let d = 1 - r;
+
+          plotCirclePoints(x, y);
+          while (x < y) {
+            x++;
+            if (d < 0) {
+              d += 2 * x + 1;
+            } else {
+              y--;
+              d += 2 * (x - y) + 1;
+            }
+            plotCirclePoints(x, y);
+          }
+        },
+        onCanvasClick(x, y) {
+          document.getElementById('param_circulo_cx').value = x;
+          document.getElementById('param_circulo_cy').value = y;
+          redraw();
+        }
+      },
+
+      elipse: {
+        label: 'Elipse',
+        params: [
+          { id: 'cx', label: 'Centro X', type: 'number', value: 0 },
+          { id: 'cy', label: 'Centro Y', type: 'number', value: 0 },
+          { id: 'rx', label: 'Raio X', type: 'number', value: 8 },
+          { id: 'ry', label: 'Raio Y', type: 'number', value: 4 },
+        ],
+        run(params) {
+          const cx = Math.round(params.cx);
+          const cy = Math.round(params.cy);
+          const rx = Math.round(params.rx);
+          const ry = Math.round(params.ry);
+
+          function plotEllipsePoints(x, y) {
+            setPixel(cx + x, cy + y);
+            setPixel(cx - x, cy + y);
+            setPixel(cx + x, cy - y);
+            setPixel(cx - x, cy - y);
+          }
+
+          let x = 0;
+          let y = ry;
+
+          let p1 = (ry * ry) - (rx * rx * ry) + (0.25 * rx * rx);
+          let dx = 2 * ry * ry * x;
+          let dy = 2 * rx * rx * y;
+
+          while (dx < dy) {
+            plotEllipsePoints(x, y);
+            x++;
+            dx += 2 * ry * ry;
+            if (p1 < 0) {
+              p1 += dx + (ry * ry);
+            } else {
+              y--;
+              dy -= 2 * rx * rx;
+              p1 += dx - dy + (ry * ry);
+            }
+          }
+
+          let p2 = (ry * ry) * ((x + 0.5) * (x + 0.5)) + (rx * rx) * ((y - 1) * (y - 1)) - (rx * rx * ry * ry);
+
+          while (y >= 0) {
+            plotEllipsePoints(x, y);
+            y--;
+            dy -= 2 * rx * rx;
+            if (p2 > 0) {
+              p2 += (rx * rx) - dy;
+            } else {
+              x++;
+              dx += 2 * ry * ry;
+              p2 += dx - dy + (rx * rx);
+            }
+          }
+        },
+        onCanvasClick(x, y) {
+          document.getElementById('param_elipse_cx').value = x;
+          document.getElementById('param_elipse_cy').value = y;
+          redraw();
+        }
+      },
+
+      bezier2: {
+        label: 'Bézier (grau 2)',
+        params: [
+          { id: 'x0', label: 'P0 X', type: 'number', value: -8 },
+          { id: 'y0', label: 'P0 Y', type: 'number', value: -6 },
+          { id: 'x1', label: 'P1 X (controle)', type: 'number', value: 0 },
+          { id: 'y1', label: 'P1 Y (controle)', type: 'number', value: 8 },
+          { id: 'x2', label: 'P2 X', type: 'number', value: 8 },
+          { id: 'y2', label: 'P2 Y', type: 'number', value: -6 },
+        ],
+        run(params) {
+          const { x0, y0, x1, y1, x2, y2 } = params;
+          const steps = 40;
+          let prev = [x0, y0];
+          for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const bx = Math.pow(1 - t, 2) * x0 + 2 * (1 - t) * t * x1 + Math.pow(t, 2) * x2;
+            const by = Math.pow(1 - t, 2) * y0 + 2 * (1 - t) * t * y1 + Math.pow(t, 2) * y2;
+            drawLine(prev[0], prev[1], bx, by);
+            prev = [bx, by];
+          }
+        }
+      },
+
+      bezier3: {
+        label: 'Bézier (grau 3)',
+        params: [
+          { id: 'x0', label: 'P0 X', type: 'number', value: -9 },
+          { id: 'y0', label: 'P0 Y', type: 'number', value: -6 },
+          { id: 'x1', label: 'P1 X', type: 'number', value: -6 },
+          { id: 'y1', label: 'P1 Y', type: 'number', value: 8 },
+          { id: 'x2', label: 'P2 X', type: 'number', value: 6 },
+          { id: 'y2', label: 'P2 Y', type: 'number', value: -8 },
+          { id: 'x3', label: 'P3 X', type: 'number', value: 9 },
+          { id: 'y3', label: 'P3 Y', type: 'number', value: 6 },
+        ],
+        run(params) {
+          const { x0, y0, x1, y1, x2, y2, x3, y3 } = params;
+          const steps = 40;
+          let prev = [x0, y0];
+          for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const bx = Math.pow(1 - t, 3) * x0 + 3 * Math.pow(1 - t, 2) * t * x1 + 3 * (1 - t) * Math.pow(t, 2) * x2 + Math.pow(t, 3) * x3;
+            const by = Math.pow(1 - t, 3) * y0 + 3 * Math.pow(1 - t, 2) * t * y1 + 3 * (1 - t) * Math.pow(t, 2) * y2 + Math.pow(t, 3) * y3;
+            drawLine(prev[0], prev[1], bx, by);
+            prev = [bx, by];
+          }
+        }
+      },
+
+      polilinha: {
+        label: 'Polilinha',
+        params: [
+          { id: 'pontos', label: 'Pontos (x,y; x,y; ...)', type: 'text', value: '-8,-8; -8,8; 0,0; 8,8; 8,-8' },
+        ],
+        run(params) {
+          if (!params.pontos) return;
+          const pts = params.pontos.split(';').map(p => p.trim().split(',').map(Number));
+          for (let i = 0; i < pts.length - 1; i++) {
+            if (pts[i].length === 2 && pts[i + 1].length === 2 && !pts[i].some(isNaN) && !pts[i + 1].some(isNaN)) {
+              drawLine(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]);
+            }
+          }
+        },
+        onCanvasClick(x, y) {
+          const el = document.getElementById('param_polilinha_pontos');
+          if (el.value.trim() === '') {
+            el.value = `${x},${y}`;
+          } else {
+            el.value += `; ${x},${y}`;
+          }
+          redraw();
+        }
+      },
+
+      preenchimento: {
+        label: 'Preenchimento',
+        params: [
+          { id: 'sx', label: 'Semente X', type: 'number', value: 0 },
+          { id: 'sy', label: 'Semente Y', type: 'number', value: 0 },
+        ],
+        run(params) {
+          const startX = Math.round(params.sx);
+          const startY = Math.round(params.sy);
+
+          drawLine(-4, 0, 0, 4, '#ff5555');
+          drawLine(0, 4, 4, 0, '#ff5555');
+          drawLine(4, 0, 0, -4, '#ff5555');
+          drawLine(0, -4, -4, 0, '#ff5555');
+
+          const fillColor = '#4fd1a5';
+          const visited = new Set();
+
+          function isBoundary(x, y) {
+            if (x >= -4 && x <= 0 && y === x + 4) return true;
+            if (x >= 0 && x <= 4 && y === -x + 4) return true;
+            if (x >= 0 && x <= 4 && y === x - 4) return true;
+            if (x >= -4 && x <= 0 && y === -x - 4) return true;
+            return false;
+          }
+
+          function floodFill(x, y) {
+            if (x < -N || x > N || y < -N || y > N) return;
+            const key = `${x},${y}`;
+            if (visited.has(key)) return;
+            if (isBoundary(x, y)) return;
+
+            visited.add(key);
+            setPixel(x, y, fillColor);
+
+            floodFill(x + 1, y);
+            floodFill(x - 1, y);
+            floodFill(x, y + 1);
+            floodFill(x, y - 1);
+          }
+
+          floodFill(startX, startY);
+        },
+        onCanvasClick(x, y) {
+          document.getElementById('param_preenchimento_sx').value = x;
+          document.getElementById('param_preenchimento_sy').value = y;
+          redraw();
+        }
+      },
+
+      recorte_linha: {
+        label: 'Recorte de Linha',
+        params: [
+          { id: 'wx0', label: 'Janela X min', type: 'number', value: -5 },
+          { id: 'wy0', label: 'Janela Y min', type: 'number', value: -5 },
+          { id: 'wx1', label: 'Janela X max', type: 'number', value: 5 },
+          { id: 'wy1', label: 'Janela Y max', type: 'number', value: 5 },
+          { id: 'x0', label: 'Reta X inicial', type: 'number', value: -9 },
+          { id: 'y0', label: 'Reta Y inicial', type: 'number', value: -2 },
+          { id: 'x1', label: 'Reta X final', type: 'number', value: 9 },
+          { id: 'y1', label: 'Reta Y final', type: 'number', value: 7 },
+        ],
+        run(params) {
+          const { wx0, wy0, wx1, wy1, x0, y0, x1, y1 } = params;
+
+          drawLine(wx0, wy0, wx1, wy0, '#e9c46a');
+          drawLine(wx1, wy0, wx1, wy1, '#e9c46a');
+          drawLine(wx1, wy1, wx0, wy1, '#e9c46a');
+          drawLine(wx0, wy1, wx0, wy0, '#e9c46a');
+
+          const INSIDE = 0;
+          const LEFT = 1;
+          const RIGHT = 2;
+          const BOTTOM = 4;
+          const TOP = 8;
+
+          function computeOutCode(x, y) {
+            let code = INSIDE;
+            if (x < wx0) code |= LEFT;
+            else if (x > wx1) code |= RIGHT;
+            if (y < wy0) code |= BOTTOM;
+            else if (y > wy1) code |= TOP;
+            return code;
+          }
+
+          let cx0 = x0, cy0 = y0;
+          let cx1 = x1, cy1 = y1;
+          let accept = false;
+
+          while (true) {
+            let code0 = computeOutCode(cx0, cy0);
+            let code1 = computeOutCode(cx1, cy1);
+
+            if ((code0 | code1) === 0) {
+              accept = true;
+              break;
+            } else if ((code0 & code1) !== 0) {
+              break;
+            } else {
+              let codeOut = code0 ? code0 : code1;
+              let x, y;
+
+              if (codeOut & TOP) {
+                x = cx0 + (cx1 - cx0) * (wy1 - cy0) / (cy1 - cy0);
+                y = wy1;
+              } else if (codeOut & BOTTOM) {
+                x = cx0 + (cx1 - cx0) * (wy0 - cy0) / (cy1 - cy0);
+                y = wy0;
+              } else if (codeOut & RIGHT) {
+                y = cy0 + (cy1 - cy0) * (wx1 - cx0) / (cx1 - cx0);
+                x = wx1;
+              } else if (codeOut & LEFT) {
+                y = cy0 + (cy1 - cy0) * (wx0 - cx0) / (cx1 - cx0);
+                x = wx0;
+              }
+
+              if (codeOut === code0) {
+                cx0 = x;
+                cy0 = y;
+              } else {
+                cx1 = x;
+                cy1 = y;
+              }
+            }
+          }
+
+          if (accept) {
+            drawLine(cx0, cy0, cx1, cy1, '#4fd1a5');
+          }
+        }
+      },
+
+      recorte_poligono: {
+        label: 'Recorte de Polígono',
+        params: [
+          { id: 'wx0', label: 'Janela X min', type: 'number', value: -5 },
+          { id: 'wy0', label: 'Janela Y min', type: 'number', value: -5 },
+          { id: 'wx1', label: 'Janela X max', type: 'number', value: 5 },
+          { id: 'wy1', label: 'Janela Y max', type: 'number', value: 5 },
+          { id: 'pontos', label: 'Polígono (x,y; x,y; ...)', type: 'text', value: '-8,-3; -2,8; 8,2; 2,-8' },
+        ],
+        run(params) {
+          const { wx0, wy0, wx1, wy1, pontos } = params;
+          if (!pontos) return;
+
+          drawLine(wx0, wy0, wx1, wy0, '#e9c46a');
+          drawLine(wx1, wy0, wx1, wy1, '#e9c46a');
+          drawLine(wx1, wy1, wx0, wy1, '#e9c46a');
+          drawLine(wx0, wy1, wx0, wy0, '#e9c46a');
+
+          let poly = pontos.split(';').map(p => p.trim().split(',').map(Number)).filter(pt => pt.length === 2 && !pt.some(isNaN));
+          if (poly.length < 3) return;
+
+          function clipEdge(points, edge, isInside, intersect) {
+            const outputList = [];
+            if (points.length === 0) return outputList;
+            let s = points[points.length - 1];
+
+            for (let i = 0; i < points.length; i++) {
+              let p = points[i];
+              if (isInside(p)) {
+                if (!isInside(s)) {
+                  outputList.push(intersect(s, p));
+                }
+                outputList.push(p);
+              } else if (isInside(s)) {
+                outputList.push(intersect(s, p));
+              }
+              s = p;
+            }
+            return outputList;
+          }
+
+          poly = clipEdge(poly, wx0, pt => pt[0] >= wx0, (s, p) => [wx0, s[1] + (p[1] - s[1]) * (wx0 - s[0]) / (p[0] - s[0])]);
+          poly = clipEdge(poly, wx1, pt => pt[0] <= wx1, (s, p) => [wx1, s[1] + (p[1] - s[1]) * (wx1 - s[0]) / (p[0] - s[0])]);
+          poly = clipEdge(poly, wy0, pt => pt[1] >= wy0, (s, p) => [s[0] + (p[0] - s[0]) * (wy0 - s[1]) / (p[1] - s[1]), wy0]);
+          poly = clipEdge(poly, wy1, pt => pt[1] <= wy1, (s, p) => [s[0] + (p[0] - s[0]) * (wy1 - s[1]) / (p[1] - s[1]), wy1]);
+
+          for (let i = 0; i < poly.length; i++) {
+            const p0 = poly[i];
+            const p1 = poly[(i + 1) % poly.length];
+            drawLine(p0[0], p0[1], p1[0], p1[1]);
+          }
+        },
+        onCanvasClick(x, y) {
+          const el = document.getElementById('param_recorte_poligono_pontos');
+          if (el.value.trim() === '') {
+            el.value = `${x},${y}`;
+          } else {
+            el.value += `; ${x},${y}`;
+          }
+          redraw();
+        }
+      },
+
+      transformacoes: {
+        label: 'Transformações',
+        params: [
+          { id: 'pontos', label: 'Polígono (x,y; x,y; ...)', type: 'text', value: '-3,-3; -3,3; 3,3; 3,-3' },
+          { id: 'tx', label: 'Translação X', type: 'number', value: 2 },
+          { id: 'ty', label: 'Translação Y', type: 'number', value: 2 },
+          { id: 'sx', label: 'Escala X', type: 'number', value: 1.5 },
+          { id: 'sy', label: 'Escala Y', type: 'number', value: 1.5 },
+          { id: 'ang', label: 'Rotação (graus)', type: 'number', value: 45 },
+          { id: 'px', label: 'Pivô X', type: 'number', value: 0 },
+          { id: 'py', label: 'Pivô Y', type: 'number', value: 0 },
+        ],
+        run(params) {
+          if (!params.pontos) return;
+          const pts = params.pontos.split(';').map(p => p.trim().split(',').map(Number)).filter(pt => pt.length === 2 && !pt.some(isNaN));
+          if (pts.length < 2) return;
+
+          const { tx, ty, sx, sy, ang, px, py } = params;
+          const rad = (ang * Math.PI) / 180;
+
+          setPixel(px, py, '#f4a261');
+
+          const transformedPts = pts.map(([x, y]) => {
+            let xS = px + (x - px) * sx;
+            let yS = py + (y - py) * sy;
+
+            let xR = px + (xS - px) * Math.cos(rad) - (yS - py) * Math.sin(rad);
+            let yR = py + (xS - px) * Math.sin(rad) + (yS - py) * Math.cos(rad);
+
+            let xT = xR + tx;
+            let yT = yR + ty;
+
+            return [xT, yT];
+          });
+
+          for (let i = 0; i < transformedPts.length; i++) {
+            const p0 = transformedPts[i];
+            const p1 = transformedPts[(i + 1) % transformedPts.length];
+            drawLine(p0[0], p0[1], p1[0], p1[1], '#4fd1a5');
+          }
+        },
+        onCanvasClick(x, y) {
+          const el = document.getElementById('param_transformacoes_pontos');
+          if (el.value.trim() === '') {
+            el.value = `${x},${y}`;
+          } else {
+            el.value += `; ${x},${y}`;
+          }
+          redraw();
+        }
+      },
+
+      projecoes: {
+        label: 'Projeções 3D',
+        params: [
+          { id: 'tipo', label: 'Tipo (ortogonal/obliqua/perspectiva)', type: 'text', value: 'perspectiva' },
+        ],
+        run(params) {
+          const vertices = [
+            [-3, -3, -3], [3, -3, -3], [3, 3, -3], [-3, 3, -3],
+            [-3, -3, 3], [3, -3, 3], [3, 3, 3], [-3, 3, 3]
+          ];
+
+          const edges = [
+            [0, 1], [1, 2], [2, 3], [3, 0],
+            [4, 5], [5, 6], [6, 7], [7, 4],
+            [0, 4], [1, 5], [2, 6], [3, 7]
+          ];
+
+          const tipo = params.tipo.toLowerCase().trim();
+          const projected = vertices.map(([x, y, z]) => {
+            if (tipo === 'ortogonal') {
+              return [x, y];
+            } else if (tipo === 'obliqua' || tipo === 'oblíqua') {
+              const factor = 0.5;
+              const angle = Math.PI / 4;
+              return [
+                x + z * factor * Math.cos(angle),
+                y + z * factor * Math.sin(angle)
+              ];
+            } else {
+              const d = 10;
+              const scale = d / (d + z);
+              return [x * scale, y * scale];
+            }
+          });
+
+          edges.forEach(([u, v]) => {
+            drawLine(projected[u][0], projected[u][1], projected[v][0], projected[v][1], '#4fd1a5');
+          });
+        }
+      },
+
+      processamento: {
+        label: 'Processamento de Imagem',
+        params: [], // Customizado via HTML dinâmico no painel
+        run(params) {
+          if (!loadedImage) {
+            // Desenha um padrão dummy se nenhuma imagem foi carregada
+            for (let x = -N; x <= N; x++) {
+              for (let y = -N; y <= N; y++) {
+                if ((x + y) % 2 === 0) {
+                  setPixel(x, y, '#1f2b38');
+                }
+              }
+            }
+            return;
+          }
+
+          // Cria um canvas em memória do tamanho exato da grade para ler os pixels da imagem
+          const side = N * 2 + 1;
+          const memCanvas = document.createElement('canvas');
+          memCanvas.width = side;
+          memCanvas.height = side;
+          const memCtx = memCanvas.getContext('2d');
+
+          // Desenha a imagem redimensionada para encaixar no grid (amostragem)
+          memCtx.drawImage(loadedImage, 0, 0, side, side);
+          const imgData = memCtx.getImageData(0, 0, side, side);
+          const data = imgData.data;
+
+          // Função auxiliar para pegar o pixel (x, y) do array ImageData
+          function getPixelColor(gx, gy) {
+            // gx, gy variam de 0 a side-1
+            if (gx < 0 || gx >= side || gy < 0 || gy >= side) return [0, 0, 0, 255];
+            const idx = (gy * side + gx) * 4;
+            return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+          }
+
+          // Renderização conforme o filtro ativo
+          for (let gy = 0; gy < side; gy++) {
+            for (let gx = 0; gx < side; gx++) {
+              const [r, g, b] = getPixelColor(gx, gy);
+              const worldX = gx - N;
+              const worldY = N - gy;
+
+              if (activeFilter === 'original') {
+                setPixel(worldX, worldY, `rgb(${r},${g},${b})`);
+              }
+              else if (activeFilter === 'grayscale') {
+                const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                setPixel(worldX, worldY, `rgb(${gray},${gray},${gray})`);
+              }
+              else if (activeFilter === 'binary') {
+                const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                const colorVal = gray >= binarizationThreshold ? 255 : 0;
+                setPixel(worldX, worldY, `rgb(${colorVal},${colorVal},${colorVal})`);
+              }
+              else if (activeFilter === 'sobel') {
+                // Cálculo de Sobel simples usando os vizinhos na imagem escalada
+                const getGray = (x, y) => {
+                  const [pr, pg, pb] = getPixelColor(x, y);
+                  return 0.299 * pr + 0.587 * pg + 0.114 * pb;
+                };
+
+                const gxKernel = [
+                  [-1, 0, 1],
+                  [-2, 0, 2],
+                  [-1, 0, 1]
+                ];
+                const gyKernel = [
+                  [-1, -2, -1],
+                  [0, 0, 0],
+                  [1, 2, 1]
+                ];
+
+                let valX = 0;
+                let valY = 0;
+
+                for (let ky = -1; ky <= 1; ky++) {
+                  for (let kx = -1; kx <= 1; kx++) {
+                    const pixelGray = getGray(gx + kx, gy + ky);
+                    valX += pixelGray * gxKernel[ky + 1][kx + 1];
+                    valY += pixelGray * gyKernel[ky + 1][kx + 1];
+                  }
+                }
+
+                const magnitude = Math.min(255, Math.sqrt(valX * valX + valY * valY));
+                setPixel(worldX, worldY, `rgb(${magnitude},${magnitude},${magnitude})`);
+              }
+            }
+          }
+        }
+      },
+    };
+
+    /* =========================================================
+       GERAÇÃO DE ABAS E PAINEL DE PARÂMETROS
+       ========================================================= */
+
+    let activeAlgorithm = null;
+    const tabsEl = document.getElementById('tabs');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelBody = document.getElementById('panelBody');
+
+    function buildTabs() {
+      tabsEl.innerHTML = '';
+      Object.keys(ALGORITHMS).forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.textContent = ALGORITHMS[key].label;
+        btn.dataset.key = key;
+        btn.addEventListener('click', () => selectAlgorithm(key));
+        tabsEl.appendChild(btn);
+      });
+    }
+
+    function selectAlgorithm(key) {
+      activeAlgorithm = key;
+      [...tabsEl.children].forEach(b => b.classList.toggle('active', b.dataset.key === key));
+      buildPanel(key);
+      redraw();
+    }
+
+    function buildPanel(key) {
+      const algo = ALGORITHMS[key];
+      panelTitle.textContent = algo.label;
+      panelBody.innerHTML = '';
+
+      // Tratamento específico para a aba de Processamento de Imagem
+      if (key === 'processamento') {
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '12px';
+
+        // Input para Upload de Imagem
+        const fileField = document.createElement('div');
+        fileField.className = 'field';
+        const fileLabel = document.createElement('label');
+        fileLabel.textContent = 'Carregar Imagem Local';
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              loadedImage = img;
+              redraw();
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+        fileField.appendChild(fileLabel);
+        fileField.appendChild(fileInput);
+        container.appendChild(fileField);
+
+        // Seletor de Filtros de Processamento
+        const filterField = document.createElement('div');
+        filterField.className = 'field';
+        const filterLabel = document.createElement('label');
+        filterLabel.textContent = 'Filtro / Algoritmo';
+        const filterSelect = document.createElement('select');
+
+        const filters = [
+          { value: 'original', text: 'Original (Amostrado)' },
+          { value: 'grayscale', text: 'Escala de Cinza' },
+          { value: 'binary', text: 'Binarização (Limiar)' },
+          { value: 'sobel', text: 'Detecção de Bordas (Sobel)' }
+        ];
+
+        filters.forEach(f => {
+          const opt = document.createElement('option');
+          opt.value = f.value;
+          opt.textContent = f.text;
+          if (f.value === activeFilter) opt.selected = true;
+          filterSelect.appendChild(opt);
+        });
+
+        // Slider para Limiar de Binarização
+        const thresholdContainer = document.createElement('div');
+        thresholdContainer.className = 'field';
+        thresholdContainer.style.display = activeFilter === 'binary' ? 'flex' : 'none';
+
+        const threshLabel = document.createElement('label');
+        threshLabel.innerHTML = `Limiar: <span class="slider-value" id="threshVal">${binarizationThreshold}</span>`;
+
+        const threshSlider = document.createElement('input');
+        threshSlider.type = 'range';
+        threshSlider.min = 0;
+        threshSlider.max = 255;
+        threshSlider.value = binarizationThreshold;
+
+        threshSlider.addEventListener('input', (e) => {
+          binarizationThreshold = parseInt(e.target.value, 10);
+          document.getElementById('threshVal').textContent = binarizationThreshold;
+          redraw();
+        });
+
+        thresholdContainer.appendChild(threshLabel);
+        thresholdContainer.appendChild(threshSlider);
+
+        filterSelect.addEventListener('change', (e) => {
+          activeFilter = e.target.value;
+          thresholdContainer.style.display = activeFilter === 'binary' ? 'flex' : 'none';
+          redraw();
+        });
+
+        filterField.appendChild(filterLabel);
+        filterField.appendChild(filterSelect);
+        container.appendChild(filterField);
+        container.appendChild(thresholdContainer);
+
+        panelBody.appendChild(container);
+        return;
+      }
+
+      if (algo.params.length === 0) {
+        panelBody.innerHTML = '<p class="hint">Sem parâmetros de grade — implemente a interface própria deste módulo.</p>';
+        return;
+      }
+
+      algo.params.forEach(p => {
+        const field = document.createElement('div');
+        field.className = 'field';
+        const label = document.createElement('label');
+        label.textContent = p.label;
+        const input = document.createElement('input');
+        input.type = p.type;
+        input.id = `param_${key}_${p.id}`;
+        input.value = p.value;
+        input.addEventListener('input', () => { redraw(); });
+        field.appendChild(label);
+        field.appendChild(input);
+        panelBody.appendChild(field);
+      });
+
+      const runBtn = document.createElement('button');
+      runBtn.className = 'primary';
+      runBtn.textContent = 'Executar';
+      runBtn.style.marginTop = '8px';
+      runBtn.addEventListener('click', redraw);
+      panelBody.appendChild(runBtn);
+    }
+
+    function getCurrentParams() {
+      if (!activeAlgorithm) return {};
+      const algo = ALGORITHMS[activeAlgorithm];
+      const result = {};
+      if (!algo.params) return result;
+      algo.params.forEach(p => {
+        const el = document.getElementById(`param_${activeAlgorithm}_${p.id}`);
+        if (!el) return;
+        result[p.id] = p.type === 'number' ? Number(el.value) : el.value;
+      });
+      return result;
+    }
+
+    /* =========================================================
+       CONTROLES GERAIS DA GRADE
+       ========================================================= */
+
+    document.getElementById('gridLimit').addEventListener('change', (e) => {
+      N = Math.max(5, parseInt(e.target.value, 10) || 11);
+      resizeCanvas();
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      clearCanvas();
+      drawGridLines();
+      drawAxes();
+    });
+
+    document.getElementById('toggleGridBtn').addEventListener('click', (e) => {
+      showGridLines = !showGridLines;
+      e.target.textContent = showGridLines ? 'Ocultar linhas' : 'Mostrar linhas';
+      redraw();
+    });
+
+    /* =========================================================
+       INICIALIZAÇÃO
+       ========================================================= */
+
+    buildTabs();
+    resizeCanvas();
+    selectAlgorithm('bresenham');
+  </script>
+</body>
+
+</html>
